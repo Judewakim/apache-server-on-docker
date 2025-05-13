@@ -1,0 +1,135 @@
+# 1. Update the package index
+sudo yum update -y
+
+# 2. Install Docker
+sudo amazon-linux-extras install docker -y
+
+# 3. Start the Docker service
+sudo service docker start
+
+#run a docker ubuntu container (detached on port 80)
+sudo docker run -dit -p 80:80 --name ubuntu-web ubuntu
+
+#go into the container
+sudo docker exec -it ubuntu-web bash
+
+#update everything inside the container
+apt-get update && apt-get upgrade -y
+
+#install apache
+apt-get install apache2 -y
+
+-checked EC2 instance public IP in web browser 
+-site not reached error 
+-apache service was installed but not started
+-systemctl command doesnt work bc im using a "minimal ubuntu image" in my container
+
+#start apache service
+service apache2 start
+
+-tested again
+-works
+
+----------------------------
+ADVANCED
+
+#exit the container itself
+exit
+
+#commit it
+sudo docker commit ubuntu-web vvakim/ubuntu-webserver:v1
+
+#log into docker
+docker login
+
+#push it
+sudo docker push vvakim/ubuntu-webserver:v1
+
+-received access denied errors
+-dockerhub account wasnt verified via email
+-fixed it and tried again
+-same error
+-confirmed username was correct and login info was correct
+-same error
+-manually created the repo via browser
+-ChatGPT thought I wasnt actually being signed into the account even with the "login succeded" message
+
+#check info about the docker account
+sudo docker info | less
+
+-couldnt find any user account info
+
+#check user account info about the docker account
+sudo docker info | grep Username
+
+-doesnt exist
+-confirmed im not actually being logged into the docker account despite the successful message
+-logged out
+-removed the current docker config
+-created an empty config
+-logged in
+-tried again. same error
+-ChatGPT figured out docker info wasnt showing Username bc I was using sudo
+-didnt have permissions to use it without sudo
+
+#added my user to the docker group
+sudo usermod -aG docker $USER
+newgrp docker
+
+-tested again
+
+docker info | grep Username
+
+-worked
+
+#pushed 
+docker push vvakim/ubuntu-webserver:v1
+
+#stop and remove original container
+docker stop ubuntu-web && docker rm ubuntu-web
+
+#run the pulled image
+docker run -dit -p 8080:80 --name ubuntu-web-alt vvakim/ubuntu-webserver:v1
+
+-tested the webpage on port 8080 
+-access denied error
+-added port 8080 on EC2 security group
+-tested again. access denied
+
+#check if apache was running 
+ps aux | grep apache2
+
+-was not bc on Linux apache doesnt run automatically
+
+#start apache manually
+docker exec -it ubuntu-web-alt bash
+apachectl start
+
+-tested webpage works
+
+---------------------------------------
+COMPLEX
+
+#create network
+docker network create custom-net
+
+#run the contianer using the new network
+docker run -dit --name ubuntu-web-net --network custom-net -p 8081:80 vvakim/ubuntu-webserver:v1
+
+#verify container is on the network
+docker inspect ubuntu-web-net
+
+#start apache manually
+docker exec -it ubuntu-web-net bash
+apachectl start
+
+-test on browser
+
+#exit the ubuntu-web-net container
+exit
+
+#stop the ubuntu-web-alt container
+docker stop ubuntu-web-alt
+
+#remove the ubuntu-web-alt container
+docker rm ubuntu-web-alt
