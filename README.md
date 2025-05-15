@@ -1,97 +1,139 @@
-# 🚀 Docker Apache Web Server
+# Docker Apache Web Server
 
-A hands-on project that builds, customizes, and deploys an Apache web server inside a Docker container. This project demonstrates the end-to-end Docker workflow — from container creation and image publishing to multi-container networking on an EC2 instance.
+This project demonstrates how to build, customize, and deploy an Apache web server inside a Docker container. It covers the complete Docker workflow—from container creation and image publishing to multi-container networking on an EC2 instance.
 
-## 📚 Overview
+## 📀 Project Overview
 
-This repo showcases:
+* Dockerized Ubuntu 20.04 with Apache2
+* Custom image creation and publishing to Docker Hub
+* EC2 deployment with Docker networking
+* Python automation script for building and deploying
+* Manual service control inside containers
+* Troubleshooting Docker login and Apache startup issues
 
-- A Dockerized Ubuntu + Apache2 web server
-- Custom image creation and publishing to Docker Hub
-- EC2 deployment with Docker networking
-- Manual service control inside containers
-- Troubleshooting Docker login and Apache startup issues
+For a detailed walkthrough, refer to the accompanying article:
+[End-to-End Docker: Apache Server Build, Push, and Networked Deploy](https://medium.com/@judewakim/end-to-end-docker-apache-server-build-push-and-networked-deploy-b33b9323da3d)
 
-Full write-up and walkthrough available here:  
-👉 [Read the article on Medium](https://medium.com/@judewakim/end-to-end-docker-apache-server-build-push-and-networked-deploy-b33b9323da3d?postPublishedType=initial)<br>
-👉 [Read the article on Dev.to](https://dev.to/vvakim/end-to-end-docker-apache-server-build-push-and-networked-deploy-gd3)
+## 📁 Project Structure
 
----
-
-## 🧰 Prerequisites
-
-- An AWS EC2 instance (Amazon Linux 2 recommended)
-- Docker installed and running
-- Open security group ports: 80, 8080, 8081
-- A Docker Hub account
-
----
-
-## 🚀 Getting Started
-
-### 1. Clone this repository
-
-```bash
-git clone https://github.com/yourusername/docker-apache-server.git
-cd docker-apache-server
+```
+.
+├── .gitignore
+├── .env
+├── README.md
+├── dockerfile
+├── deploy.py
+├── commitPushRunPulledImage.sh
+├── createNetworkRunNewestContainer.sh
+├── installApacheInContainer.sh
+└── notes.txt
 ```
 
-### 2. Build the Docker image
+* **`.gitignore`**: Specifies files and directories to be ignored by Git.
+* **`.env`**: Contains environment variables (e.g., Docker Hub credentials).
+* **`dockerfile`**: Defines the Docker image setup with Ubuntu and Apache2.
+* **`deploy.py`**: Python script to automate building, pushing, and deploying the Docker image.
+* **Shell Scripts**:
 
-```bash
-docker build -t yourdockerhubusername/ubuntu-webserver:v1 .
+  * **`commitPushRunPulledImage.sh`**: Commits, pushes, and runs the Docker image.
+  * **`createNetworkRunNewestContainer.sh`**: Creates a Docker network and runs the latest container.
+  * **`installApacheInContainer.sh`**: Installs Apache inside a running container.
+* **`notes.txt`**: Contains miscellaneous notes and troubleshooting tips.
+
+## ✨ Getting Started
+
+### Prerequisites
+
+* Docker installed on your local machine or EC2 instance
+* Python 3.x installed
+* Docker Hub account
+
+### Setup
+
+1. **Clone the repository**:
+
+   ```bash
+   git clone https://github.com/Judewakim/apache-server-on-docker.git
+   cd apache-server-on-docker
+   ```
+
+2. **Configure environment variables**:
+
+   Create a `.env` file in the root directory with the following content:
+
+   ```env
+   DOCKER_USERNAME=your_dockerhub_username
+   DOCKER_PASSWORD=your_dockerhub_password
+   IMAGE_NAME=your_dockerhub_username/apache-server
+   IMAGE_TAG=latest
+   ```
+
+   *Note: Ensure `.env` is listed in `.gitignore` to prevent sensitive information from being committed.*
+
+3. **Install required Python packages**:
+
+   ```bash
+   pip install docker python-dotenv
+   ```
+
+### Build and Deploy
+
+* **To build the Docker image, push to Docker Hub, and deploy**:
+
+  ```bash
+  python3 deploy.py --build
+  ```
+
+* **To deploy using the existing image from Docker Hub**:
+
+  ```bash
+  python3 deploy.py
+  ```
+
+## 🐳 Dockerfile Overview
+
+The `dockerfile` sets up an Ubuntu 20.04 base image, installs Apache2, and configures it to run in the foreground.
+
+```Dockerfile
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y apache2 && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+EXPOSE 80
+
+CMD ["apachectl", "-D", "FOREGROUND"]
 ```
 
-### 3. Run the Container
+## 🐍 Python Automation Script (`deploy.py`)
+
+The `deploy.py` script automates the following tasks:
+
+* Builds the Docker image (if `--build` flag is provided)
+* Logs into Docker Hub using credentials from `.env`
+* Pushes the image to Docker Hub
+* Creates a Docker network (if not existing)
+* Runs the Docker container within the created network
+
+### Usage
 
 ```bash
-# Create a Docker network
-docker network create custom-net
-
-# Run the container on port 8080
-docker run -dit --name ubuntu-web --network custom-net -p 8081:80 yourdockerhubusername/ubuntu-webserver:v1
-
-# Start Apache inside the container
-docker exec -it ubuntu-web bash
-apachectl start
-```
-Now navigate to ```http://<your-ec2-ip>:8081``` in your browser
-
----
-
-## 📦 Pushing to Docker Hub
-
-```bash
-# Login
-docker login
-
-# Push it
-docker push yourdockerhubusername/ubuntu-webserver:v1
+python3 deploy.py [--build]
 ```
 
----
+* `--build`: Optional flag to build and push the Docker image before deployment.
 
-## 🧠 Troubleshooting
+## 📝 Troubleshooting
 
-| Issue                                     | Solution                                                              |
-| ----------------------------------------- | --------------------------------------------------------------------- |
-| Apache not running                        | Use `service apache2 start` or `apachectl start` inside the container |
-| Docker login “succeeded” but doesn’t work | Add user to Docker group, restart shell, and re-login                 |
-| Port not accessible                       | Check EC2 security group — open TCP ports 80, 8080, 8081              |
+* **Apache Not Starting**: Ensure that Apache is started using `apachectl -D FOREGROUND` as specified in the Dockerfile.
+* **Docker Push Denied**: Verify Docker Hub credentials in the `.env` file and ensure you're logged in.
+* **Port Not Accessible**: Ensure that port 80 is open in your EC2 instance's security group settings.
 
+## 📄 License
 
----
-
-## 📬 Connect with Me
-
-📝 [Medium](https://medium.com/@judewakim)
-
-💼 [LinkedIn](https://linkedin.com/in/jude-wakim)
-
-🐙 [GitHub](https://github.com/Judewakim)
-
-💻 [Dev.to](https://dev.to/vvakim)
-
-
-
-
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
