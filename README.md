@@ -11,8 +11,9 @@ This project demonstrates how to build, customize, and deploy an Apache web serv
 * Manual service control inside containers
 * Troubleshooting Docker login and Apache startup issues
 
-For a detailed walkthrough, refer to the accompanying article:
-[End-to-End Docker: Apache Server Build, Push, and Networked Deploy](https://medium.com/@judewakim/end-to-end-docker-apache-server-build-push-and-networked-deploy-b33b9323da3d)
+Check out the articles:
+[Medium article](https://medium.com/aws-in-plain-english/end-to-end-docker-apache-server-build-push-and-networked-deploy-b33b9323da3d)
+[Dev.to article](https://dev.to.com/vvakim/end-to-end-docker-apache-server-build-push-and-networked-deploy-gd3)
 
 ## 📁 Project Structure
 
